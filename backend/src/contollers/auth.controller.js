@@ -30,7 +30,7 @@ const userLoginContoller = async (req,res) =>{
      // If the Password is Valid Generating a jwt token
      const token = jwt.sign({userId:user._id},process.env.Jwt_Secret,{expiresIn : '2h'});
      //Place the token in the cookie
-      res.cookie(token);
+      res.cookie("token",token);
      
      
       res.status(200).json({
