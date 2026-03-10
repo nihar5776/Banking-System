@@ -6,5 +6,7 @@ const router = express.Router();
 
 router.post("/", authMiddleware.authMiddleware,accountController.createAccountController)
 
+router.post("/system/initial-funds",authMiddleware.authSystemUserMiddleware,)
+
 
 module.exports = router;

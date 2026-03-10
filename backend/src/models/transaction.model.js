@@ -1,5 +1,4 @@
 const mongoose = require("mongoose")
-const { applyTimestamps } = require("./userModel")
 
 const transcationSchema = new mongoose.Schema({
 
@@ -43,7 +42,7 @@ const transcationSchema = new mongoose.Schema({
     timestamps :true
 })
 
-const transactionModel = transcationSchema.model("transaction",transcationSchema);
+const transactionModel = mongoose.model("transaction",transcationSchema);
 
 
 module.exports = transactionModel;
