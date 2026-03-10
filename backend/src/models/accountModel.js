@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const ledgerModel = require("../models/ledger.Model");
+const ledgerModel = require("../models/ledger.Model")
 
 const accountSchema = new mongoose.Schema({
     user:{
@@ -19,8 +19,7 @@ const accountSchema = new mongoose.Schema({
     currency :{
         type :"String",
         required : [true,"Currency is required for Creating an Account"],
-              default : "INR"
-
+        default : "INR"
     },
   },
         {
