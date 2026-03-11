@@ -15,7 +15,7 @@ async function authMiddleware(req, res, next) {
         token : token
     })
 
-    if(isBlackListed){
+    if(!isBlackList){
         return res.status(401).json({
             message : "Unauthorized access ,token is invalid"
         })
@@ -56,7 +56,7 @@ async function authSystemUserMiddleware(req,res,next){
         token : token
     })
 
-    if(isBlackListed){
+    if(!isBlackList){
         return res.status(401).json({
             message : "Unauthorized access ,token is invalid"
         })

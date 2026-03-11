@@ -2,7 +2,10 @@ const transactionModel = require("../models/transaction.model")
 const ledgerModel = require("../models/ledger.Model")
 const accountModel = require("../models/accountModel")
 const emailService = require("../services/email.service")
+const userModel =require("../models/userModel")
+const uuidService = require("../services/uuid.service");
 const mongoose = require("mongoose")
+
 
 /**
  * - Create a new transaction
@@ -24,7 +27,8 @@ async function createTransaction(req, res) {
     /**
      * 1. Validate request
      */
-    const { fromAccount, toAccount, amount, idempotencyKey } = req.body
+    const { fromAccount, toAccount, amount} = req.body
+    const idempotencyKey  = uuidService.uniqueIdGeneration()
 
     if (!fromAccount || !toAccount || !amount || !idempotencyKey) {
         return res.status(400).json({
@@ -98,6 +102,9 @@ async function createTransaction(req, res) {
     const balance = await fromUserAccount.getBalance()
 
     if (balance < amount) {
+
+        await emailService.sendTransactionFailureEmail(req.user.email, req.user.name, amount, toAccount)
+
         return res.status(400).json({
             message: `Insufficient balance. Current balance is ${balance}. Requested amount is ${amount}`
         })
@@ -149,7 +156,9 @@ async function createTransaction(req, res) {
         await session.commitTransaction()
         session.endSession()
     } catch (error) {
-
+        
+           await emailService.sendTransactionFailureEmail(req.user.email, req.user.name, amount, toAccount)
+           
         return res.status(400).json({
             message: "Transaction is Pending due to some issue, please retry after sometime",
         })
@@ -160,6 +169,14 @@ async function createTransaction(req, res) {
      */
     await emailService.sendTransactionEmail(req.user.email, req.user.name, amount, toAccount)
 
+    
+        const receiverAccount = await accountModel.findById(toAccount)
+        const receiver = await userModel.findById(receiverAccount.user)
+
+    await emailService. receiverTransactionEmail(receiver.email, receiver.name, amount, req.user._id)
+
+    //console.log(receiver.email + " " + receiver.name + " " + amount + " " + req.user._id)
+
     return res.status(201).json({
         message: "Transaction completed successfully",
         transaction: transaction
@@ -168,7 +185,9 @@ async function createTransaction(req, res) {
 }
 
 async function createInitialFundsTransaction(req, res) {
-    const { toAccount, amount, idempotencyKey } = req.body
+    const { toAccount, amount} = req.body
+
+    const idempotencyKey  = uuidService.uniqueIdGeneration()
 
     if (!toAccount || !amount || !idempotencyKey) {
         return res.status(400).json({
@@ -225,14 +244,26 @@ async function createInitialFundsTransaction(req, res) {
     transaction.status = "Completed"
     await transaction.save({ session })
 
+
+       await emailService.sendTransactionEmail(req.user.email, req.user.name, amount, toAccount)
+
+const receiverAccount = await accountModel.findById(toAccount)
+const receiver = await userModel.findById(receiverAccount.user)
+   //console.log(receiver._id + " " + receiverAccount._id + " "+ req.body.toAccount)
+     await emailService. receiverTransactionEmail(receiver.email, receiver.name, amount, req.user._id)
+
+//console.log(receiver.email + " " + receiver.name + " " + amount + " " + req.user._id)
+
     await session.commitTransaction()
     session.endSession()
 
-     await emailService.sendTransactionEmail(fromUserAccount.email, fromUserAccount.name, amount, toAccount)
-
     return res.status(201).json({
         message: "Initial funds transaction completed successfully",
-        transaction: transaction
+        transaction: transaction,
+        data:{
+          fromAccount : fromUserAccount
+        }
+
     })
 }
 
