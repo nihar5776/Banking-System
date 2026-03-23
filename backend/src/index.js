@@ -15,6 +15,7 @@ app.use(cookieParser());
 
 app.use("/api/auth/",authRouter);
 app.use("/api/accounts",accountRouter);
+
 app.use("/api/transactions",transactionRouter);
 app.use("/api/statements",statementRouter);
 

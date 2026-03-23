@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema(
 {
@@ -29,6 +30,19 @@ const userSchema = new mongoose.Schema(
         immutable : true,
         select : false
     },
+    otp:{
+        type : String,
+        select : false
+    },
+    otpExpiry :{ 
+        type :Date,
+        select:false
+    },
+     isVerified:{
+        type : Boolean,
+        default : false
+    },
+    index : {expires :'1m'},
 },
 {
     timestamps: true
@@ -50,6 +64,10 @@ userSchema.methods.passwordCompare = async function (password) {
     console.log(password,)
     return bcrypt.compare(password, this.password);
 };
+
+userSchema.statics.generateOtp = function(){
+    return crypto.randomInt(100000,999999 + 1).toString();
+}
 
 const userModel = mongoose.model("user", userSchema);
 

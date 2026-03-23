@@ -72,9 +72,18 @@ async function sendTransactionFailureEmail(userEmail, name, amount, toAccount) {
     await sendEmail(userEmail, subject, text, html);
 }
 
+async function sendRegistrationOtp(userEmail, name, otp) {
+    const subject = 'Registration OTP';
+    const text = `Hello ${name},Your OTP for registration verification is ${otp}.This OTP is valid for 5 minutes.If you did not request this, please ignore this email.Best regards,The Backend Team`;
+    const html = `<p>Hello ${name},</p><p>Your OTP for registration verification is:</p><h2>${otp}</h2><p>This OTP is valid for <b>5 minutes</b>.</p><p>If you did not request this, please ignore this email.</p><br/><p>Best regards,<br>The Backend Team</p>`;
+    await sendEmail(userEmail, subject, text, html);
+    console.log(userEmail)
+}
+
 module.exports = {
     sendRegistrationEmail,
     sendTransactionEmail,
     sendTransactionFailureEmail,
-    receiverTransactionEmail
+    receiverTransactionEmail,
+    sendRegistrationOtp
 };

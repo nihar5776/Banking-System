@@ -7,7 +7,9 @@ const router = express.Router();
 
 // Post -> /api/auth/Register
 router.post("/register",authController.userRegisterController);
+router.post("/verify",authController.userOtpVerificationController);
 router.post("/login",authController.userLoginContoller);
-router.post("/logout",authController.userLogoutContoller)
+router.post("/logout",authController.userLogoutContoller);
+router.post("/resend",authController.userresendVerificationOtp);
 
 module.exports = router; 
