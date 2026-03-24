@@ -189,7 +189,7 @@ async function userOtpVerificationController(req, res) {
       const otp = userModel.generateOtp();
        user.otp = otp
        user.otpExpiry =  Date.now() + 5 * 60 * 1000
-       user.save()
+       await user.save()
          
       if(!user.otp || !user.otpExpiry){
          return res.status(400).json({
@@ -204,10 +204,78 @@ async function userOtpVerificationController(req, res) {
      })
     }
 
+
+ async function userPasswordResetOtpGeneration(req,res){
+    const {email} = req.body
+    const  user = await userModel.findOne({
+        email : email
+    }) 
+    
+    if(!user){
+        return res.status(404).json({
+            status : "Failed",
+            message : "No User Exists on this Email"
+        })
+    }
+
+    const otp = userModel.generateOtp();
+       user.otp = otp
+       user.otpExpiry =  Date.now() + 5 * 60 * 1000
+       await user.save()
+         
+      if(!user.otp || !user.otpExpiry){
+         return res.status(400).json({
+            status : "Failed",
+            message : " otp or otp Expiry is Missing int DB"
+         })
+      }
+    await emailService.sendResetPasswordOtp(email,user.name,otp);
+
+    return res.status(200).json({
+        status : "Success",
+        message : "Otp is Successfully Send"
+    })
+    }
+
+    async function passwordOtpVerification(req,res){
+        const {email,otp,password} = req.body;
+       const user = await userModel.findOne({ email }).select("+otp +otpExpiry +password");
+        if(!user){
+            return res.status(404).json({
+                status : "Failed",
+             message : "No User Exists on this Email"
+        })
+    }
+
+        if (user.otpExpiry < Date.now()) {
+            return res.status(401).json({
+                message: "Oops! OTP is expired"
+            });
+        }
+
+        if (otp !== user.otp) {
+            return res.status(401).json({
+                message: "Please enter correct OTP"
+            });
+        }
+        
+        user.password = password
+        await user.save({ validateModifiedOnly: true });
+        
+        await emailService.sendPasswordChangedEmail(user.email,user.name)
+
+        return res.status(201).json({
+            status :"Success",
+            message : "Password reset is SuccessFull"
+        })
+    }
+
 module.exports = {
     userRegisterController,
     userLoginContoller,
     userLogoutContoller,
     userOtpVerificationController,
-    userresendVerificationOtp
+    userresendVerificationOtp,
+    userPasswordResetOtpGeneration,
+    passwordOtpVerification
 } 

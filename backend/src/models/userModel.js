@@ -42,7 +42,6 @@ const userSchema = new mongoose.Schema(
         type : Boolean,
         default : false
     },
-    index : {expires :'1m'},
 },
 {
     timestamps: true

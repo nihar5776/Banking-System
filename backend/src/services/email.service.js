@@ -80,10 +80,46 @@ async function sendRegistrationOtp(userEmail, name, otp) {
     console.log(userEmail)
 }
 
+async function sendResetPasswordOtp(userEmail, name, otp) {
+    const subject = 'Password Reset OTP';
+    const text = `Hello ${name}, Your OTP for resetting your password is ${otp}. This OTP is valid for 5 minutes. If you did not request a password reset, please ignore this email. Best regards, The Backend Team`;
+    const html = `
+        <p>Hello ${name},</p>
+        <p>Your OTP for password reset is:</p>
+        <h2>${otp}</h2>
+        <p>This OTP is valid for <b>5 minutes</b>.</p>
+        <p>If you did not request a password reset, please ignore this email.</p>
+        <br/>
+        <p>Best regards,<br>The Backend Team</p>
+    `;
+    await sendEmail(userEmail, subject, text, html);
+    console.log(userEmail);
+}
+
+async function sendPasswordChangedEmail(userEmail, name) {
+    const subject = "Password Changed Successfully";
+
+    const text = `Hello ${name}, Your password has been successfully changed. If you did not perform this action, please contact support immediately. Best regards, The Backend Team`;
+
+    const html = `
+        <p>Hello ${name},</p>
+        <p>Your password has been <b>successfully changed</b>.</p>
+        <p>If you did not perform this action, please contact support immediately.</p>
+        <br/>
+        <p>Best regards,<br>The Backend Team</p>
+    `;
+
+    await sendEmail(userEmail, subject, text, html);
+
+    console.log("Password change email sent to:", userEmail);
+}
 module.exports = {
     sendRegistrationEmail,
     sendTransactionEmail,
     sendTransactionFailureEmail,
     receiverTransactionEmail,
-    sendRegistrationOtp
+    sendRegistrationOtp,
+    sendResetPasswordOtp,
+    sendPasswordChangedEmail
+
 };
