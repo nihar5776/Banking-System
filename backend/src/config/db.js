@@ -7,7 +7,7 @@ function mongoDBConnect(){
            console.log("MongoDB Connected Successfully ");
       })
         .catch((err) =>{
-            console.log("Failed To Connect The MongoDB",err.body);
+            console.log("Failed To Connect The MongoDB",err);
             process.exit(1);
         })
 }

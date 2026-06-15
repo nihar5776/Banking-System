@@ -10,7 +10,7 @@ const userLoginContoller = async (req,res) =>{
     const {email,password} = req.body;
     // Getting the User Data From the Db based on the email
      const user = await userModel.findOne({
-         email:email
+          email:email
      }).select("+password")
      // Checking Wether there Exists a User Acc With the Given Email
      if(!user){
@@ -39,9 +39,9 @@ const userLoginContoller = async (req,res) =>{
      const token = jwt.sign({userId:user._id},process.env.Jwt_Secret,{expiresIn : '2h'});
      //Place the token in the cookie
       res.cookie("token",token);
-     
-     
-      res.status(200).json({
+      
+      
+       res.status(200).json({
         user:{
            _id : user._id,
             email : user.email,
@@ -156,6 +156,7 @@ async function userOtpVerificationController(req, res) {
        const newUser = await userModel.create({
         email : email,
         password :password,
+        name : name,
         isVerified :true
        })
 

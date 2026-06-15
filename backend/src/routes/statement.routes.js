@@ -6,5 +6,6 @@ const statementController = require("../contollers/statement.controller");
 
 const router = express.Router()
 
-router.get("/:accountId",authMiddleware.authMiddleware,statementController.getAccountStatement)
+router.get("/:accountId",statementController.getAccountStatement)
+router.get("/history/:accountId", statementController.getAccountTransactions)
 module.exports = router;

@@ -71,4 +71,26 @@ async function getAccountStatement(req, res) {
     }
 }
 
-module.exports = { getAccountStatement }
+async function getAccountTransactions(req, res) {
+    try {
+        const { accountId } = req.params;
+
+        const transactions = await ledgerModel
+            .find({ account: accountId })
+            .populate("transaction")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            status: "Success",
+            transactions
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: "Failed",
+            message: "Error retrieving transactions",
+            error: error.message
+        });
+    }
+}
+
+module.exports = { getAccountStatement, getAccountTransactions }
