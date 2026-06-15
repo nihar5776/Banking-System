@@ -199,7 +199,7 @@ export default function Transfer() {
                 <Send size={24} />
               </div>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Fund Transfer</h2>
-              <p style={{ color: '#94A3B8', fontSize: '0.95rem' }}>Send money to another Oceanic Trust Account instantly</p>
+              <p style={{ color: '#94A3B8', fontSize: '0.95rem' }}>Send money to another Banking Ledger Account instantly</p>
             </div>
 
             <form onSubmit={handleSubmit}>

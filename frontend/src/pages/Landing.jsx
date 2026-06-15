@@ -14,7 +14,7 @@ export default function Landing() {
             </div>
           </div>
           <h1 className="hero-title">
-            Welcome to <span>Oceanic Trust Bank</span>
+            Welcome to <span>Banking Ledger</span>
           </h1>
           <p className="hero-subtitle">
             An advanced, secure banking application engineered with atomic ledger technology, multi-factor email verification, and spreadsheet analytics.
@@ -38,7 +38,7 @@ export default function Landing() {
           <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
             <h2 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '1rem' }}>How Our Application Works</h2>
             <p style={{ color: '#94A3B8', maxWidth: '720px', margin: '0 auto', fontSize: '1.05rem', lineHeight: '1.6' }}>
-              Oceanic Trust is a secure digital banking ledger. We implement strict double-entry bookkeeping rules to ensure ledger consistency and absolute safety of user assets.
+              Banking Ledger is a secure digital banking platform. We implement strict double-entry bookkeeping rules to ensure ledger consistency and absolute safety of user assets.
             </p>
           </div>
 
@@ -101,7 +101,7 @@ export default function Landing() {
             </div>
             
             <p style={{ color: '#94A3B8', marginBottom: '2rem', fontSize: '0.95rem' }}>
-              Oceanic Trust's architecture is separated into a secure Express backend and a decoupled React frontend:
+              Banking Ledger's architecture is separated into a secure Express backend and a decoupled React frontend:
             </p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>

@@ -1,4 +1,4 @@
-# 🚀 Oceanic Trust: Agentic MERN Ledger Banking System
+# 🚀 Banking Ledger: Agentic MERN Ledger Banking System
 
 <div align="center">
 
@@ -26,9 +26,8 @@ graph TD
     Backend -->|2. Query / Aggregate Balance & Ledger| Database[(MongoDB Atlas / Mongoose)]
     Backend -->|3. Trigger OTP Verification Emails| EmailService[Nodemailer SMTP Service]
     Backend -->|4. Generate Workbook Binary| ExcelService[ExcelJS Streaming Exporter]
-    ExcelService -->|5. Binary Download Stream (.xlsx)| Client
-    Database -->|6. Calculate Live Balances| BalanceEngine["getBalance()
-    Mongoose Ledger Aggregation Engine"]
+    ExcelService -->|5. Binary Download Stream as XLSX| Client
+    Database -->|6. Calculate Live Balances| BalanceEngine["getBalance() - Mongoose Ledger Aggregation Engine"]
     BalanceEngine -->|7. Balance Payload| Backend
     Backend -->|8. Signed Cookie / JWT / Session State| Client
 ```
@@ -158,7 +157,7 @@ Create a `.env` file in the `frontend/` directory:
 VITE_API_BASE_URL=
 
 # Comma-separated list of administrative email roles
-VITE_ADMIN_EMAILS=nihar3611@gmail.com,admin@oceanic.com,niharni02@gmail.com
+VITE_ADMIN_EMAILS=nihar3611@gmail.com,admin@bankingledger.com,niharni02@gmail.com
 ```
 
 ---
@@ -280,9 +279,7 @@ graph TD
     CompareFunds -->|No| FailBalance["Return 400: Insufficient balance"]:::server
     CompareFunds -->|Yes| CreateTxn["Create transactionModel entry (status: Pending)"]:::db
     
-    CreateTxn --> WriteLedger["Write atomic ledger entries:
-    1. Debit sender account (-amount)
-    2. Credit recipient account (+amount)"]:::db
+    CreateTxn --> WriteLedger["Write atomic ledger entries for debit and credit"]:::db
     
     WriteLedger --> CompleteTxn["Set transactionModel status = Completed"]:::db
     CompleteTxn --> TxnSuccess["Return 201: Transfer successful"]:::server
@@ -304,10 +301,7 @@ graph TD
     Start["Request Statement Export"] --> Guard["authMiddleware.authMiddleware"]:::server
     Guard --> GET_Statement["GET /api/statements/:accountId"]:::server
     GET_Statement --> QueryLedger["Query ledgerModel populated with transaction details"]:::db
-    QueryLedger --> FormatRows["Format statement:
-    - Determine Credit/Debit per line
-    - Add transaction IDs & counterparty account details
-    - Style row headers and values"]:::server
+    QueryLedger --> FormatRows["Format statement credits, debits, and headers"]:::server
     FormatRows --> StreamExcel["Stream binary using exceljs WorkbookWriter"]:::server
     StreamExcel --> Download["Browser download: statement_accountId.xlsx"]:::client
 
@@ -336,9 +330,7 @@ graph TD
     FetchRecipient -->|Invalid Account| FailRecip["Return 400: Recipient account invalid"]:::server
     FetchRecipient -->|Valid| InitTxn["Save transactionModel (from: Treasury, to: Client)"]:::db
     
-    InitTxn --> WriteLedger["Write ledger records:
-    1. Debit System Treasury (-amount)
-    2. Credit Recipient Client (+amount)"]:::db
+    InitTxn --> WriteLedger["Write ledger entries for treasury and recipient"]:::db
     
     WriteLedger --> ProvisionSuccess["Return 200: Provision dispatched successfully"]:::server
 

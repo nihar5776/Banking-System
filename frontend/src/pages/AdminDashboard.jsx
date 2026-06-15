@@ -32,7 +32,7 @@ export default function AdminDashboard() {
   const [amount, setAmount] = useState('');
 
   useEffect(() => {
-    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@oceanic.com').split(',');
+    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@bankingledger.com').split(',');
     const isAdmin = user && adminEmails.includes(user.email);
 
     if (!user) {

@@ -182,7 +182,7 @@ export default function Dashboard() {
               <div className="card-top">
                 <div className="bank-logo">
                   <CreditCard size={20} style={{ color: 'var(--ocean-blue)' }} />
-                  <span>OCEANIC TRUST</span>
+                  <span>BANKING LEDGER</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span className="card-status-badge">

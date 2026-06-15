@@ -35,7 +35,7 @@ function Navigation() {
     }
   };
 
-  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@oceanic.com,niharni02@gmail.com').split(',');
+  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@bankingledger.com,niharni02@gmail.com').split(',');
   const isAdmin = user && adminEmails.includes(user.email);
 
   return (
@@ -43,7 +43,7 @@ function Navigation() {
       <div className="container">
         <Link to="/" className="logo">
           <Landmark size={26} />
-          <span>Oceanic Trust</span>
+          <span>Banking Ledger</span>
         </Link>
         <div className="nav-links">
           {user ? (
@@ -92,7 +92,7 @@ function DashboardRoute() {
   const { user, selectedAccountId } = React.useContext(UserContext);
   if (!user) return <Login />;
   
-  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@oceanic.com,niharni02@gmail.com').split(',');
+  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@bankingledger.com,niharni02@gmail.com').split(',');
   const isAdmin = user && adminEmails.includes(user.email);
   
   if (isAdmin) return <AdminDashboard />;
@@ -105,7 +105,7 @@ function ProtectedRoute({ children }) {
   const { user, selectedAccountId } = React.useContext(UserContext);
   if (!user) return <Login />;
   
-  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@oceanic.com,niharni02@gmail.com').split(',');
+  const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || 'nihar3611@gmail.com,admin@bankingledger.com,niharni02@gmail.com').split(',');
   const isAdmin = user && adminEmails.includes(user.email);
   
   if (isAdmin) return <AdminDashboard />;
@@ -134,7 +134,7 @@ function AppContent() {
       </Routes>
       <footer className="footer">
         <div className="container">
-          <p>&copy; {new Date().getFullYear()} Oceanic Trust Bank. All rights reserved. Secured by standard 256-bit encryption.</p>
+          <p>&copy; {new Date().getFullYear()} Banking Ledger. All rights reserved. Secured by standard 256-bit encryption.</p>
         </div>
       </footer>
     </div>

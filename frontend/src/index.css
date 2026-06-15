@@ -1,5 +1,5 @@
 /* ==========================================================================
-   DESIGN SYSTEM: OCEANIC TRUST (Vanilla CSS)
+   DESIGN SYSTEM: BANKING LEDGER (Vanilla CSS)
    ========================================================================== */
 
    :root {
@@ -398,7 +398,7 @@
     -webkit-text-fill-color: transparent;
   }
   
-  /* Premium Account Card (Theme 2: Oceanic Trust Ice Blue + White Card with Navy elements) */
+  /* Premium Account Card (Theme 2: Banking Ledger Ice Blue + White Card with Navy elements) */
   .account-container {
     display: grid;
     grid-template-columns: 1fr;
