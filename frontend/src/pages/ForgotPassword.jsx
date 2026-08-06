@@ -1,154 +1,161 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-import { AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useNavigate, Link } from "react-router-dom";
+import { Loader2, Building2, ArrowLeft, Mail } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { requestPasswordResetOtp } from "@/services/api";
+
+const schema = z.object({
+  email: z.string().email("Enter a valid email address"),
+});
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return <p className="mt-1 text-xs text-destructive">{message}</p>;
+}
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState(1); // 1 = Request OTP, 2 = Reset Password
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [sent, setSent] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
-  const handleRequestOtp = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({ resolver: zodResolver(schema) });
 
+  const onSubmit = async (data) => {
     try {
-      if (!email.trim()) throw new Error('Email is required');
-      const response = await api.sendResetOtp(email);
-      setSuccess(response.message || 'Reset OTP sent to your email.');
-      setStep(2);
+      await requestPasswordResetOtp({ email: data.email });
+      setSubmittedEmail(data.email);
+      setSent(true);
+      toast({
+        variant: "success",
+        title: "OTP sent",
+        description: "Check your inbox for the reset code.",
+      });
     } catch (err) {
-      setError(err.message || 'Failed to send reset OTP.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
-    try {
-      if (!otp.trim() || password.length < 6) {
-        throw new Error('OTP and password (min 6 characters) are required');
-      }
-      const response = await api.resetPassword(email, otp, password);
-      setSuccess(response.message || 'Password changed successfully!');
-      
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        navigate('/login', { state: { info: 'Password changed successfully. You can now login.' } });
-      }, 2000);
-    } catch (err) {
-      setError(err.message || 'Failed to reset password.');
-    } finally {
-      setLoading(false);
+      const msg =
+        err?.response?.data?.message || "Failed to send OTP. Please try again.";
+      toast({ variant: "destructive", title: "Error", description: msg });
     }
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div style={{ display: 'inline-flex', padding: '0.75rem', borderRadius: '50%', backgroundColor: 'rgba(37, 99, 235, 0.1)', color: 'var(--ocean-blue)', marginBottom: '1rem' }}>
-            <KeyRound size={24} />
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Brand */}
+        <div className="flex items-center gap-2 justify-center mb-8">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <Building2 className="h-4 w-4 text-primary-foreground" />
           </div>
-          <h2 className="auth-title">Reset Password</h2>
-          <p className="auth-subtitle">
-            {step === 1 ? 'Request a code to reset your password' : 'Enter the code and set your new password'}
-          </p>
+          <span className="text-lg font-semibold text-foreground">Backend Ledger</span>
         </div>
 
-        {error && (
-          <div className="alert alert-error">
-            <AlertCircle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle>Forgot your password?</CardTitle>
+            <CardDescription>
+              {sent
+                ? `We sent a reset code to ${submittedEmail}. Use it on the next page.`
+                : "Enter the email address linked to your account and we'll send you a one-time reset code."}
+            </CardDescription>
+          </CardHeader>
 
-        {success && (
-          <div className="alert alert-success">
-            <CheckCircle2 size={16} />
-            <span>{success}</span>
-          </div>
-        )}
+          <CardContent>
+            {sent ? (
+              /* Success state */
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                  <Mail className="h-5 w-5 shrink-0 text-green-600" />
+                  <p className="text-sm text-green-800">
+                    OTP sent to <span className="font-medium">{submittedEmail}</span>. It expires in 5 minutes.
+                  </p>
+                </div>
+                <Button
+                  id="go-to-reset-btn"
+                  className="w-full"
+                  onClick={() =>
+                    navigate("/reset-password", {
+                      state: { email: submittedEmail },
+                    })
+                  }
+                >
+                  Enter OTP &amp; Reset Password
+                </Button>
+                <Button
+                  id="resend-forgot-btn"
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  onClick={() => setSent(false)}
+                >
+                  Use a different email
+                </Button>
+              </div>
+            ) : (
+              /* Form state */
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate
+                className="space-y-4"
+              >
+                <div>
+                  <Label htmlFor="forgot-email">Email Address</Label>
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    className="mt-1.5"
+                    {...register("email")}
+                    aria-invalid={!!errors.email}
+                  />
+                  <FieldError message={errors.email?.message} />
+                </div>
 
-        {step === 1 ? (
-          <form onSubmit={handleRequestOtp}>
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={loading}>
-              {loading ? 'Sending Code...' : 'Request Reset Code'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleResetPassword}>
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                className="form-input"
-                value={email}
-                disabled
-              />
-            </div>
+                <Button
+                  id="send-otp-btn"
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending OTP…
+                    </>
+                  ) : (
+                    "Send Reset OTP"
+                  )}
+                </Button>
 
-            <div className="form-group">
-              <label className="form-label">6-Digit Reset Code</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. 123456"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                required
-                style={{ letterSpacing: '4px', textAlign: 'center', fontSize: '1.25rem', fontWeight: 'bold' }}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">New Password</label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={loading}>
-              {loading ? 'Resetting Password...' : 'Reset Password'}
-            </button>
-          </form>
-        )}
-
-        <p className="auth-footer-text">
-          Remember your password? <Link to="/login">Sign In</Link>
-        </p>
+                <div className="flex items-center justify-center">
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Back to login
+                  </Link>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
