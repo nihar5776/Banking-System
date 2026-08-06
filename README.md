@@ -12,7 +12,7 @@
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
 ![Nodemailer](https://img.shields.io/badge/Nodemailer-339933?style=for-the-badge&logo=nodemailer&logoColor=white)
 
-An advanced, minimal, and modern **full-stack banking & ledger web application** built with React, Tailwind CSS, shadcn/ui primitives, Node.js, Express 5, and MongoDB Atlas. Features secure email OTP verification, tab-isolated session security, live account balances computed from double-entry ledger entries, interactive Recharts analytics, instant fund transfers, Excel statement generation, and a System Treasury workspace.
+An advanced, minimal, and modern **full-stack banking & ledger web application** built with React, Tailwind CSS, shadcn/ui primitives, Node.js, Express 5, and MongoDB Atlas. Features secure OTP authentication, tab-isolated session state, live account balances derived from double-entry ledger entries, Recharts data analytics, a dedicated fund transfer workflow, Excel statement exports, and a System Admin workspace.
 
 </div>
 
@@ -56,20 +56,20 @@ graph TD
 * **Fund Distribution (`PieChart`)**: Interactive donut chart displaying received vs sent fund ratios.
 
 ### 💸 Instant Fund Transfer System
-* **Pre-Submission Validation**: Live client & server checks for account existence, active status, and available balance.
+* **Live Validation**: Pre-submission checks for account existence, active status, and available balance.
 * **Confirmation Dialog**: Interactive review modal before executing fund transfers.
 * **Idempotency Protection**: Unique UUID-based idempotency keys prevent duplicate charges.
 
 ### 📜 Transaction History & Audit (`/transactions`)
-* **Search & Multi-Filter**: Search transactions by ID or account ID, with dropdown filters for Type (Credit/Debit) and Status (Completed, Pending, Failed, Reversed).
+* **Live Search & Filter**: Search transactions by ID or account ID, with dropdown filters for Type (Credit/Debit) and Status (Completed, Pending, Failed, Reversed).
 * **Audit Modal**: Click any transaction row to view complete details, full counterparty account IDs, timestamps, and idempotency keys.
 
 ### 📄 Official Account Statement Exporter (`/statements`)
 * **Excel (.xlsx) Export**: One-click download of official account statements generated and streamed dynamically via ExcelJS.
 
-### 🛡️ System Treasury & Capital Injection Workspace (`/admin-dashboard`)
-* **Role-Based Routing**: System users (`systemUser: true`) are automatically routed to the Admin Dashboard upon authentication.
-* **Unlimited Capital Disbursement**: Dedicated system endpoint (`/api/transactions/system/initial-funds`) allows initial capital seeding to client accounts without balance limits.
+### 🛡️ System Admin Workspace (`/admin-dashboard`)
+* **Role-Based Access**: System users (`systemUser: true`) are automatically routed to the Admin Dashboard upon authentication.
+* **Unlimited Capital Disbursement**: Admin workspace allows initial fund seeding via `/api/transactions/system/initial-funds` without balance constraints.
 
 ---
 
@@ -135,53 +135,6 @@ graph TD
 
 ---
 
-## ⚙️ Prerequisites & Environment Variables
-
-Create a file named `.env` inside the `backend` directory:
-
-```env
-# Server Port
-PORT=3000
-
-# MongoDB Connection String
-MONGODB_URI=mongodb://localhost:27017/banking-system
-
-# JWT Hashing Secret
-Jwt_Secret=your_super_secret_jwt_key_here
-
-# Nodemailer OAuth2 Credentials (Gmail)
-EMAIL_USER=your_email@gmail.com
-CLIENT_ID=your_google_oauth_client_id
-CLIENT_SECRET=your_google_oauth_client_secret
-REFRESH_TOKEN=your_google_oauth_refresh_token
-```
-
----
-
-## 🚀 Getting Started
-
-Follow these steps to set up and run the application locally:
-
-### 1. Start the Backend API Server
-Navigate to the `backend` folder, install npm packages, and start Nodemon:
-```bash
-cd backend
-npm install
-npm start
-```
-*(The backend server will connect to MongoDB and start listening on port `3000`)*
-
-### 2. Start the Frontend Client
-Open a new terminal window, navigate to the `frontend` folder, install npm packages, and launch Vite:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-*(The client application will start running on port `5173`)*
-
----
-
 ## 🔌 Core API Specifications
 
 | Method | Endpoint | Description | Auth Required |
@@ -203,37 +156,84 @@ npm run dev
 
 ---
 
-## 🔄 Detailed Feature & API Workflows
+## 🔄 Detailed API Execution Workflows
 
-This section details the step-by-step execution flow for every application feature and API request, complete with interactive Mermaid diagrams mapping frontend triggers directly to backend controllers, MongoDB schemas, and ledger engines.
+Below is the exhaustive, endpoint-by-endpoint workflow specification for every backend API endpoint in the system.
 
 ---
 
-### 🔑 1. User Authentication & OTP Verification Flow
-Manages registration, 6-digit email OTP validation, sign-ins, and session blacklists.
+### 🔑 Authentication APIs (`/api/auth/*`)
 
-#### 🛠️ Files Involved:
-* **Routes**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js)
-* **Controller**: [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js)
-* **Model**: [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js), [tokenBlackListModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/tokenBlackListModel.js)
-* **Service**: [email.service.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/services/email.service.js)
-* **Auth Guard Middleware**: [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js)
+#### 1. `POST /api/auth/register`
+* **Purpose**: Registers a new user and dispatches an account activation OTP email.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js), [email.service.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/services/email.service.js)
+* **Workflow**:
+  1. Receives `{ name, email, password }` in request body.
+  2. Queries `userModel.findOne({ email })`. If user already exists, returns `400 Email Already Exists`.
+  3. Generates a random 6-digit numeric OTP via `userModel.generateOtp()` and sets expiry to `Date.now() + 5 * 60 * 1000` (5 minutes).
+  4. Saves new user to MongoDB (`isVerified: false`). A Mongoose pre-save hook automatically hashes the password using `bcrypt` (10 salt rounds).
+  5. Dispatches an account activation email containing the 6-digit OTP code using Nodemailer.
+  6. Responds with `201 Created`.
 
-#### 📝 Step-by-Step Flow:
-1. **Registration**:
-   * Client posts name, email, and password to `POST /api/auth/register`.
-   * Backend checks if the email exists in [userModel](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js). If unique, it generates a 6-digit OTP code (`userSchema.statics.generateOtp`), sets an expiry date (5 mins), hashes the password via bcrypt, and saves the user record (`isVerified: false`).
-   * `emailService.sendRegistrationEmail` triggers an email to the user via Nodemailer OAuth2.
-2. **OTP Verification**:
-   * Client submits the OTP code to `POST /api/auth/verify`.
-   * Backend queries `userModel` (selecting `+otp +otpExpiry`), verifies code equality and expiry, and updates `isVerified = true`.
-3. **Login & Role Detection**:
-   * Client submits credentials to `POST /api/auth/login`.
-   * Backend verifies password hash via `bcrypt.compare`. On match, it generates a signed JWT token and responds with user metadata and token.
-   * Frontend probes system endpoints using the token to determine if the user is a `systemUser`, navigating them to `/admin-dashboard` or `/dashboard`.
-4. **Logout & Blacklisting**:
-   * Client posts to `POST /api/auth/logout`.
-   * Backend extracts the token from `Authorization` header or cookie, records it in [tokenBlackListModel](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/tokenBlackListModel.js), clears cookies, and responds with 200 OK.
+#### 2. `POST /api/auth/verify`
+* **Purpose**: Validates the 6-digit OTP code and activates the user account.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js)
+* **Workflow**:
+  1. Receives `{ email, otp }` in request body.
+  2. Queries `userModel.findOne({ email }).select("+otp +otpExpiry")`.
+  3. Returns `400 User not found` if email doesn't exist.
+  4. Verifies `user.otp === otp` and `user.otpExpiry > Date.now()`. If invalid or expired, returns `400 Invalid OTP details`.
+  5. Updates `user.isVerified = true`, clears `user.otp` and `user.otpExpiry`, and saves the document.
+  6. Responds with `200 Account Verified Successfully`.
+
+#### 3. `POST /api/auth/login`
+* **Purpose**: Authenticates user credentials and generates a signed JWT session token.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js)
+* **Workflow**:
+  1. Receives `{ email, password }` in request body.
+  2. Queries `userModel.findOne({ email }).select("+password")`.
+  3. If user doesn't exist or `isVerified === false`, returns `400 Account not verified or invalid`.
+  4. Compares plain password against stored hash via `bcrypt.compare`. If mismatch, returns `400 Invalid credentials`.
+  5. Signs a JWT token containing `{ userId: user._id }` using `process.env.Jwt_Secret` (valid for 2 hours).
+  6. Sets HTTP cookie `token` and returns `200 OK` with user details `{ _id, name, email }` and JWT token.
+
+#### 4. `POST /api/auth/logout`
+* **Purpose**: Terminates user session and blacklists the active JWT token.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [tokenBlackListModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/tokenBlackListModel.js), [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js)
+* **Workflow**:
+  1. Middleware extracts JWT token from `Authorization: Bearer <token>` header or `req.cookies.token`.
+  2. Creates a new document in `tokenBlackListModel` storing the active JWT token string.
+  3. Clears browser cookie `token`.
+  4. Responds with `200 User Logged Out Successfully`.
+
+#### 5. `POST /api/auth/resend`
+* **Purpose**: Generates and emails a fresh 6-digit activation OTP.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js), [email.service.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/services/email.service.js)
+* **Workflow**:
+  1. Receives `{ email }` in request body.
+  2. Finds user in `userModel`. If missing or already verified, returns `400`.
+  3. Generates new 6-digit OTP and 5-minute expiry timestamp. Saves updated user.
+  4. Sends registration OTP email via Nodemailer and returns `200 OTP Sent Successfully`.
+
+#### 6. `POST /api/auth/resetotp`
+* **Purpose**: Generates a password recovery OTP and emails it to the user.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js), [email.service.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/services/email.service.js)
+* **Workflow**:
+  1. Receives `{ email }` in request body.
+  2. Finds verified user in `userModel`. If missing, returns `404 User Not Found`.
+  3. Generates 6-digit recovery OTP and 5-minute expiry. Saves updated user document.
+  4. Calls `emailService.sendResetPasswordOtpEmail` via Nodemailer.
+  5. Responds with `200 Password Reset OTP Sent`.
+
+#### 7. `POST /api/auth/resetpass`
+* **Purpose**: Verifies recovery OTP and updates the user's password.
+* **Files**: [auth.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/auth.js), [auth.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/auth.controller.js), [userModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/userModel.js)
+* **Workflow**:
+  1. Receives `{ email, otp, password }` in request body.
+  2. Finds user in `userModel` selecting `+otp +otpExpiry`.
+  3. Validates OTP equality and non-expired timestamp.
+  4. Assigns `user.password = password`. The Mongoose pre-save hook automatically hashes the new password with `bcrypt`.
+  5. Clears `user.otp` and `user.otpExpiry`, saves document, and returns `200 Password Reset Successful`.
 
 ```mermaid
 graph TD
@@ -241,68 +241,52 @@ graph TD
     classDef server fill:#10b981,stroke:#047857,color:#fff,font-weight:bold;
     classDef db fill:#f59e0b,stroke:#b45309,color:#fff,font-weight:bold;
     
-    Start["User Auth Portal Selection"] --> Route{Select Action}
+    Start["User Auth Request"] --> Route{Auth API Route}
     
-    %% Register
-    Route -->|Register| Register["POST /api/auth/register"]:::server
-    Register --> FindUser{"Check email in userModel"}:::db
-    FindUser -->|Registered| RegFail["Return 400: Email already exists"]:::server
-    FindUser -->|New| SaveOtp["Generate OTP code & save pending user record"]:::db
-    SaveOtp --> SendMail["Send email verification code via Nodemailer SMTP"]:::server
-    SendMail --> RegSuccess["Return 201: Verification pending"]:::server
-    
-    %% Verify OTP
-    Route -->|Verify OTP| Verify["POST /api/auth/verify"]:::server
-    Verify --> CheckOtp{"Validate OTP & Expiry in userModel"}:::db
-    CheckOtp -->|Incorrect / Expired| VerifyFail["Return 400: Invalid OTP details"]:::server
-    CheckOtp -->|Correct| ActivateUser["Set isVerified = true in userModel"]:::db
-    ActivateUser --> VerifySuccess["Return 200: Account activated"]:::server
-    
-    %% Login
-    Route -->|Login| Login["POST /api/auth/login"]:::server
-    Login --> LoadUser{"Fetch user from DB by email"}:::db
-    LoadUser -->|Not Verified| LoginUnverified["Return 400: Account not verified"]:::server
-    LoadUser -->|Verified| CompareHash{"Compare hash via bcrypt"}:::db
-    CompareHash -->|Match| SetCookie["Generate JWT Token & set response payload"]:::server
-    CompareHash -->|Mismatch| LoginFail["Return 400: Invalid credentials"]:::server
-    SetCookie --> LoginSuccess["Return 200: Auth session active"]:::server
-    
-    %% Logout
-    Route -->|Logout| Logout["POST /api/auth/logout"]:::server
-    Logout --> InvalidateToken["Add active token to tokenBlackListModel"]:::db
-    InvalidateToken --> ClearCookie["Clear browser token cookies & sessionStorage"]:::server
-    ClearCookie --> LogoutSuccess["Return 200: Session terminated"]:::server
+    Route -->|POST /api/auth/register| Reg["1. Check email -> Generate OTP -> Save user -> Send email"]:::server
+    Route -->|POST /api/auth/verify| Ver["2. Verify OTP & Expiry -> Set isVerified=true"]:::server
+    Route -->|POST /api/auth/login| Log["3. Validate hash -> Sign JWT -> Return session token"]:::server
+    Route -->|POST /api/auth/logout| Out["4. Extract JWT -> Add to tokenBlackListModel -> Clear cookie"]:::server
+    Route -->|POST /api/auth/resend| Res["5. Generate new OTP -> Update user -> Resend email"]:::server
+    Route -->|POST /api/auth/resetotp| Rotp["6. Generate recovery OTP -> Save user -> Send email"]:::server
+    Route -->|POST /api/auth/resetpass| Rpass["7. Verify recovery OTP -> Hash new password via bcrypt"]:::server
 
-    class Start,RegFail,RegSuccess,VerifyFail,VerifySuccess,LoginUnverified,LoginFail,LoginSuccess,LogoutSuccess client;
+    class Start,Reg,Ver,Log,Out,Res,Rotp,Rpass client;
 ```
 
 ---
 
-### 💼 2. Bank Account Provisioning & Balance Aggregation Flow
-Handles creating customer bank accounts and computing live balances from the double-entry ledger.
+### 💼 Account APIs (`/api/accounts/*`)
 
-#### 🛠️ Files Involved:
-* **Routes**: [account.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/account.routes.js)
-* **Controller**: [account.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/account.controller.js)
-* **Model**: [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js), [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js)
-* **Auth Guard**: [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js)
+#### 8. `POST /api/accounts`
+* **Purpose**: Opens a new active customer bank account for the authenticated user.
+* **Files**: [account.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/account.routes.js), [account.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/account.controller.js), [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js), [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js)
+* **Workflow**:
+  1. `authMiddleware` validates JWT token from header or cookie and attaches `req.user`.
+  2. Calls `createAccountController`.
+  3. Creates document in `accountModel` setting `user: req.user._id`, default status `"Active"`, default currency `"INR"`.
+  4. Responds with `201 Created` containing created account object.
 
-#### 📝 Step-by-Step Flow:
-1. **Create Account**:
-   * Client posts to `POST /api/accounts`.
-   * `authMiddleware` validates JWT token.
-   * `createAccountController` creates a new document in [AccountModel](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js) bound to `req.user._id` with status `"Active"` and default currency `"INR"`.
-2. **Fetch Customer Account**:
-   * Client issues `GET /api/accounts`.
-   * Backend queries `AccountModel.findOne({ user: req.user._id })` and returns account metadata.
-3. **Calculate Live Balance**:
-   * Client calls `GET /api/accounts/balance/:accountId`.
-   * Backend calls `accountSchema.methods.getBalance()` on the Mongoose model instance.
-   * The Mongoose method executes a MongoDB aggregation pipeline on `ledgerModel`:
-     - `$match`: matches entries where `account == accountId`
-     - `$group`: calculates `totalDebit` (sum of Debit entries) and `totalCredit` (sum of Credit entries)
-     - `$project`: returns `balance = totalCredit - totalDebit`
-   * Backend responds with `{ accountId, balance }`.
+#### 9. `GET /api/accounts`
+* **Purpose**: Retrieves the customer bank account details owned by the authenticated user.
+* **Files**: [account.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/account.routes.js), [account.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/account.controller.js), [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js), [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js)
+* **Workflow**:
+  1. `authMiddleware` verifies JWT token.
+  2. Queries `accountModel.findOne({ user: req.user._id })`.
+  3. Responds with `200 OK` containing `{ accounts: accountDoc }`.
+
+#### 10. `GET /api/accounts/balance/:accountId`
+* **Purpose**: Aggregates double-entry ledger entries in real-time to compute the live account balance.
+* **Files**: [account.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/account.routes.js), [account.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/account.controller.js), [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js), [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js), [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js)
+* **Workflow**:
+  1. `authMiddleware` verifies JWT token.
+  2. Finds account document matching `_id: accountId` and `user: req.user._id`. Returns `404 Account Not Found` if missing.
+  3. Calls Mongoose model instance method `account.getBalance()`.
+  4. `getBalance()` executes a MongoDB aggregation pipeline on `ledgerModel`:
+     - `$match`: `{ account: accountId }`
+     - `$group`: calculates `$totalDebit` (sum of `Debit` entries) and `$totalCredit` (sum of `Credit` entries)
+     - `$project`: computes `balance = totalCredit - totalDebit`
+  5. Returns `200 OK` with `{ accountId, balance }`.
 
 ```mermaid
 graph TD
@@ -310,169 +294,134 @@ graph TD
     classDef server fill:#10b981,stroke:#047857,color:#fff,font-weight:bold;
     classDef db fill:#f59e0b,stroke:#b45309,color:#fff,font-weight:bold;
 
-    Start["Client: Account Action / Dashboard Load"] --> ActionRoute{Select Action}
+    Start["Account API Call"] --> AccRoute{Account API Route}
+    
+    AccRoute -->|POST /api/accounts| CreateAcc["1. Validate JWT -> Create accountModel document (user: req.user._id, status: Active, currency: INR)"]:::server
+    AccRoute -->|GET /api/accounts| GetAcc["2. Validate JWT -> Query accountModel.findOne({ user: req.user._id }) -> Return account"]:::server
+    AccRoute -->|GET /api/accounts/balance/:accountId| CalcBal["3. Validate JWT -> Run MongoDB aggregation on ledgerModel (totalCredit - totalDebit) -> Return balance"]:::server
 
-    %% Create Account
-    ActionRoute -->|Create Account| CreatePost["POST /api/accounts"]:::server
-    CreatePost --> AuthGuard1["authMiddleware: Validate JWT Token"]:::server
-    AuthGuard1 --> InsertAccount["AccountModel.create(user: req.user._id)"]:::db
-    InsertAccount --> CreateSuccess["Return 201: New Active Bank Account"]:::server
-
-    %% Get Account
-    ActionRoute -->|Fetch User Account| GetAcc["GET /api/accounts"]:::server
-    GetAcc --> AuthGuard2["authMiddleware: Validate JWT Token"]:::server
-    AuthGuard2 --> FindAcc["AccountModel.findOne(user: req.user._id)"]:::db
-    FindAcc --> AccSuccess["Return 200: Account Document"]:::server
-
-    %% Calculate Balance
-    ActionRoute -->|Get Live Balance| GetBal["GET /api/accounts/balance/:accountId"]:::server
-    GetBal --> AuthGuard3["authMiddleware: Validate JWT Token"]:::server
-    AuthGuard3 --> ExecAgg["Run account.getBalance(): MongoDB aggregation pipeline on ledgerModel"]:::db
-    ExecAgg --> SumCalc["Aggregate: totalCredit - totalDebit"]:::db
-    SumCalc --> BalSuccess["Return 200: Calculated Live Balance"]:::server
-
-    class Start,CreateSuccess,AccSuccess,BalSuccess client;
+    class Start,CreateAcc,GetAcc,CalcBal client;
 ```
 
 ---
 
-### 💸 3. Double-Entry Transaction Processing Flow
-Examines isolation checks, debit validation, atomic transaction records, and double-entry ledger creation.
+### 💸 Transaction APIs (`/api/transactions/*`)
 
-#### 🛠️ Files Involved:
-* **Routes**: [transcation.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/transcation.routes.js)
-* **Controller**: [transaction.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/transaction.controller.js)
-* **Models**: [transaction.model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/transaction.model.js), [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js), [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js)
+#### 11. `POST /api/transactions`
+* **Purpose**: Performs an instant fund transfer between two customer bank accounts with double-entry ledger entries.
+* **Files**: [transcation.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/transcation.routes.js), [transaction.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/transaction.controller.js), [transaction.model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/transaction.model.js), [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js), [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js), [email.service.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/services/email.service.js)
+* **Workflow**:
+  1. `authMiddleware` verifies JWT token.
+  2. Receives `{ fromAccount, toAccount, amount }` in request body.
+  3. Verifies `fromAccount !== toAccount`.
+  4. Loads `fromUserAccount` and `toUserAccount` from `accountModel`. Verifies both accounts exist and have `status === "Active"`.
+  5. Calls `fromUserAccount.getBalance()`. If `balance < amount`, triggers transaction failure email via Nodemailer and returns `400 Insufficient balance`.
+  6. Generates unique idempotency key via `uuidv4()`.
+  7. Creates `transactionModel` document (`status: "Pending"`).
+  8. Creates two immutable atomic double-entry ledger records in `ledgerModel`:
+     - Sender entry: `{ account: fromAccount, amount, transaction: txn._id, type: "Debit" }`
+     - Recipient entry: `{ account: toAccount, amount, transaction: txn._id, type: "Credit" }`
+  9. Updates `transactionModel` status to `"Completed"`.
+  10. Triggers transaction success emails to both sender and recipient using Nodemailer.
+  11. Responds with `201 Created`.
 
-#### 📝 Step-by-Step Flow:
-1. **Initiate Transfer**:
-   * Client submits `{ fromAccount, toAccount, amount }` to `POST /api/transactions`.
-2. **Validation Guards**:
-   * Verifies `fromAccount !== toAccount` (cannot transfer to self).
-   * Verifies both `fromAccount` and `toAccount` exist in database and have status `"Active"`.
-3. **Sender Balance Check**:
-   * Runs `fromUserAccount.getBalance()` to derive available funds.
-   * If `balance < amount`, it triggers a transaction failure email via Nodemailer and returns `400 Insufficient balance`.
-4. **Atomic Transaction & Ledger Writes**:
-   * Creates a `transactionModel` document with `status: "Pending"` and a unique `idempotencyKey`.
-   * Creates two atomic double-entry ledger entries in `ledgerModel`:
-     - Entry 1: `{ account: fromAccount, amount, transaction: txn._id, type: "Debit" }`
-     - Entry 2: `{ account: toAccount, amount, transaction: txn._id, type: "Credit" }`
-   * Updates `transactionModel` status to `"Completed"`.
-   * Triggers transaction success emails to both sender and recipient.
-   * Returns `201 Created` with full transaction details.
+#### 12. `POST /api/transactions/system/initial-funds`
+* **Purpose**: Dispatches initial capital provisions from the system treasury account to client accounts without balance constraints.
+* **Files**: [transcation.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/transcation.routes.js), [transaction.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/transaction.controller.js), [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js) (`authSystemUserMiddleware`), [accountModel.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/accountModel.js)
+* **Workflow**:
+  1. `authSystemUserMiddleware` validates JWT token and verifies `req.user.systemUser === true`. Returns `403 Not a System User` if unauthorized.
+  2. Receives `{ toAccount, amount }` in request body.
+  3. Queries system user's treasury bank account in `accountModel`. If none exists, creates a new active treasury account.
+  4. Validates target `toAccount` exists and has `status === "Active"`.
+  5. Bypasses sender balance check (system treasury has unlimited capital).
+  6. Creates `transactionModel` record (`status: "Pending"`, unique idempotencyKey).
+  7. Creates double-entry ledger entries in `ledgerModel`:
+     - Treasury entry: `{ account: systemAccount._id, amount, transaction: txn._id, type: "Debit" }`
+     - Client entry: `{ account: toAccount, amount, transaction: txn._id, type: "Credit" }`
+  8. Updates transaction status to `"Completed"` and returns `200 OK`.
 
 ```mermaid
 graph TD
     classDef client fill:#3b82f6,stroke:#1d4ed8,color:#fff,font-weight:bold;
     classDef server fill:#10b981,stroke:#047857,color:#fff,font-weight:bold;
     classDef db fill:#f59e0b,stroke:#b45309,color:#fff,font-weight:bold;
-    
-    Start["Client: Initiate Fund Transfer"] --> Guard["authMiddleware.authMiddleware: Verify Token"]:::server
-    Guard --> POST_Txn["POST /api/transactions"]:::server
-    POST_Txn --> CheckSelf{"Check if fromAccount == toAccount"}:::server
-    CheckSelf -->|Yes| FailSelf["Return 400: Cannot transfer to yourself"]:::server
-    CheckSelf -->|No| FindAccounts{"Load sender & recipient accounts from DB"}:::db
-    
-    FindAccounts -->|Missing or Closed| FailStatus["Return 400: Accounts invalid or not active"]:::server
-    FindAccounts -->|Active| CalcBalance["Run ledger aggregation: fromAccount.getBalance()"]:::db
-    
-    CalcBalance --> CompareFunds{"Check balance >= amount"}
-    CompareFunds -->|No| SendFailEmail["Send Failure Email via Nodemailer"]:::server
-    SendFailEmail --> FailBalance["Return 400: Insufficient balance"]:::server
-    
-    CompareFunds -->|Yes| CreateTxn["Save transactionModel entry (status: Pending, idempotencyKey)"]:::db
-    CreateTxn --> WriteLedger["Write atomic ledger entries: Debit for Sender, Credit for Recipient"]:::db
-    
-    WriteLedger --> CompleteTxn["Update transactionModel status = Completed"]:::db
-    CompleteTxn --> SendSuccessEmails["Send Confirmation Emails to Sender & Recipient"]:::server
-    SendSuccessEmails --> TxnSuccess["Return 201: Transfer Completed successfully"]:::server
 
-    class Start,FailSelf,FailStatus,FailBalance,TxnSuccess client;
+    Start["Transaction API Call"] --> TxnRoute{Transaction API Route}
+    
+    TxnRoute -->|POST /api/transactions| Transfer["1. Validate auth -> Check Active accounts -> Run getBalance() -> Create Pending txn -> Write Debit/Credit ledger -> Set Completed -> Send emails"]:::server
+    TxnRoute -->|POST /api/transactions/system/initial-funds| Disburse["2. Verify systemUser -> Get/Create Treasury account -> Check target account -> Write Debit Treasury / Credit Client ledger -> Set Completed"]:::server
+
+    class Start,Transfer,Disburse client;
 ```
 
 ---
 
-### 📑 4. Live Statement Workbook Exporter Flow
-Aggregates double-entry ledger rows and streams formatted Excel spreadsheets dynamically.
+### 📄 Statement APIs (`/api/statements/*`)
 
-#### 🛠️ Files Involved:
-* **Routes**: [statement.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/statement.routes.js)
-* **Controller**: [statement.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/statement.controller.js)
-* **Model**: [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js)
+#### 13. `GET /api/statements/:accountId`
+* **Purpose**: Generates and streams an official account statement as an Excel workbook (`.xlsx`).
+* **Files**: [statement.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/statement.routes.js), [statement.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/statement.controller.js), [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js)
+* **Workflow**:
+  1. `authMiddleware` validates JWT token.
+  2. Queries `ledgerModel.find({ account: accountId }).populate("transaction").sort({ createdAt: -1 })`.
+  3. Initializes `new ExcelJS.Workbook()` and adds worksheet `"Statement"`.
+  4. Defines table columns: `Date`, `Transaction ID`, `From`, `To`, `Debit`, `Credit`, `Status`.
+  5. Iterates through populated ledger entries, evaluating whether `transaction.fromAccount` matches `accountId` to populate the `Debit` column vs `Credit` column.
+  6. Formats header row font (`bold: true`).
+  7. Sets headers `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and `Content-Disposition: attachment; filename=account_statement.xlsx`.
+  8. Streams `workbook.xlsx.write(res)` directly to response output stream.
 
-#### 📝 Step-by-Step Flow:
-1. **Export Request**:
-   * Client requests `GET /api/statements/:accountId`.
-2. **Query Ledger Entries**:
-   * Controller queries `ledgerModel.find({ account: accountId }).populate("transaction").sort({ createdAt: -1 })`.
-3. **ExcelJS Streaming Construction**:
-   * Initializes `new ExcelJS.Workbook()` and adds a worksheet named `"Statement"`.
-   * Configures column headers: `Date`, `Transaction ID`, `From`, `To`, `Debit`, `Credit`, `Status`.
-   * Iterates through populated ledger entries, mapping amounts into Debit or Credit columns based on whether `fromAccount` matches `accountId`.
-4. **Binary Stream Response**:
-   * Sets response headers `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and `Content-Disposition: attachment; filename=account_statement.xlsx`.
-   * Streams `workbook.xlsx.write(res)` directly to the client browser.
+#### 14. `GET /api/statements/history/:accountId`
+* **Purpose**: Retrieves full populated transaction history JSON for account analytics, search, and table views.
+* **Files**: [statement.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/statement.routes.js), [statement.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/statement.controller.js), [ledger.Model.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/models/ledger.Model.js)
+* **Workflow**:
+  1. `authMiddleware` validates JWT token.
+  2. Queries `ledgerModel.find({ account: accountId }).populate("transaction").sort({ createdAt: -1 })`.
+  3. Responds with `200 OK` containing `{ status: "Success", transactions: ledgerArray }`.
 
 ```mermaid
 graph TD
     classDef client fill:#3b82f6,stroke:#1d4ed8,color:#fff,font-weight:bold;
     classDef server fill:#10b981,stroke:#047857,color:#fff,font-weight:bold;
     classDef db fill:#f59e0b,stroke:#b45309,color:#fff,font-weight:bold;
-    
-    Start["Client: Click Download Excel Statement"] --> Guard["authMiddleware.authMiddleware: Verify Token"]:::server
-    Guard --> GET_Statement["GET /api/statements/:accountId"]:::server
-    GET_Statement --> QueryLedger["Query ledgerModel populated with transaction details"]:::db
-    QueryLedger --> FormatRows["Format statement rows: map Date, Txn ID, From, To, Debit, Credit, Status"]:::server
-    FormatRows --> StreamExcel["Stream binary via ExcelJS workbook.xlsx.write(res)"]:::server
-    StreamExcel --> Download["Browser Blob download: account_statement.xlsx"]:::client
 
-    class Start,Download client;
+    Start["Statement API Call"] --> StmRoute{Statement API Route}
+    
+    StmRoute -->|GET /api/statements/:accountId| Excel["1. Validate JWT -> Query populated ledgerModel -> Build ExcelJS workbook -> Stream binary .xlsx response"]:::server
+    StmRoute -->|GET /api/statements/history/:accountId| History["2. Validate JWT -> Query populated ledgerModel sorted by createdAt desc -> Return JSON transactions array"]:::server
+
+    class Start,Excel,History client;
 ```
 
 ---
 
-### 🛡️ 5. System Treasury Capital Injection Flow
-Injects initial funds from the system treasury account to client accounts without balance constraints.
+## ⚡ Quick Start
 
-#### 🛠️ Files Involved:
-* **Routes**: [transcation.routes.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/routes/transcation.routes.js)
-* **Controller**: [transaction.controller.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/contollers/transaction.controller.js)
-* **Middleware**: [auth.middleware.js](file:///c:/Users/mibni/OneDrive/Desktop/Banking%20System/backend/src/middlewares/auth.middleware.js) (`authSystemUserMiddleware`)
-
-#### 📝 Step-by-Step Flow:
-1. **Admin Authorization Guard**:
-   * Client posts to `POST /api/transactions/system/initial-funds`.
-   * `authSystemUserMiddleware` checks token, loads user from database selecting `+systemUser`, and verifies `user.systemUser === true`. If false, returns `403 Forbidden: not a System User`.
-2. **Treasury Account Retrieval**:
-   * Controller checks if a treasury bank account exists for the system user. If not, it creates a new active treasury account automatically.
-3. **Capital Dispatch (No Balance Limit)**:
-   * Bypasses sender balance check (system treasury has infinite capital).
-   * Validates target recipient account status.
-   * Creates `transactionModel` entry and double-entry `ledgerModel` records (Debit for Treasury, Credit for Recipient).
-   * Updates transaction status to `"Completed"` and returns `200 OK`.
-
-```mermaid
-graph TD
-    classDef client fill:#3b82f6,stroke:#1d4ed8,color:#fff,font-weight:bold;
-    classDef server fill:#10b981,stroke:#047857,color:#fff,font-weight:bold;
-    classDef db fill:#f59e0b,stroke:#b45309,color:#fff,font-weight:bold;
-    
-    Start["Admin Panel: Disburse Initial Funds"] --> AdminGuard["authMiddleware.authSystemUserMiddleware: Verify systemUser"]:::server
-    AdminGuard -->|Not Admin| RejectAdmin["Return 403: Not a System User"]:::server
-    AdminGuard -->|Admin| POST_Funds["POST /api/transactions/system/initial-funds"]:::server
-    
-    POST_Funds --> FindTreasury{"Query systemUser account in DB"}:::db
-    FindTreasury -->|None| CreateTreasury["Create new active system treasury account"]:::db
-    FindTreasury -->|Exists| FetchRecipient{"Load target client account ID"}:::db
-    CreateTreasury --> FetchRecipient
-    
-    FetchRecipient -->|Invalid Account| FailRecip["Return 400: Recipient account invalid"]:::server
-    FetchRecipient -->|Valid| InitTxn["Save transactionModel (from: Treasury, to: Client)"]:::db
-    
-    InitTxn --> WriteLedger["Write double-entry ledger records (Debit Treasury, Credit Client)"]:::db
-    WriteLedger --> ProvisionSuccess["Return 200: Capital provision dispatched successfully"]:::server
-
-    class Start,RejectAdmin,FailRecip,ProvisionSuccess client;
+### 1. Clone & Configure Backend
+```bash
+cd backend
+npm install
+```
+Create a `.env` file inside `backend/`:
+```env
+PORT=3000
+MONGODB_URI=your_mongodb_connection_string
+Jwt_Secret=your_jwt_secret
+EMAIL_USER=your_email@gmail.com
+CLIENT_ID=your_oauth_client_id
+CLIENT_SECRET=your_oauth_client_secret
+REFRESH_TOKEN=your_oauth_refresh_token
 ```
 
+Start the backend:
+```bash
+npm start
+```
+
+### 2. Configure & Run Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
