@@ -11,7 +11,9 @@ const mongoDBConnect = require('./src/config/db');
 
 
 
- mongoDBConnect();
-app.listen(3000,()=>{
-    console.log("Server has been Started ...");
+mongoDBConnect();
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server has been Started on port ${PORT}...`);
 });

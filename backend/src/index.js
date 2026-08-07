@@ -9,6 +9,12 @@ const transactionRouter = require("./routes/transcation.routes");
 const statementRouter = require("./routes/statement.routes");
 
 
+const cors = require('cors');
+
+app.use(cors({
+  origin: (origin, callback) => callback(null, true),
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 

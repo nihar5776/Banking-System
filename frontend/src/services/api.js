@@ -1,7 +1,16 @@
 import axios from "axios";
 
+// Format base URL properly, appending /api if pointing directly to server domain
+let rawApiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.trim() : "/api";
+if (rawApiUrl.startsWith("http://") || rawApiUrl.startsWith("https://")) {
+  rawApiUrl = rawApiUrl.replace(/\/+$/, "");
+  if (!rawApiUrl.endsWith("/api")) {
+    rawApiUrl = `${rawApiUrl}/api`;
+  }
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: rawApiUrl,
   withCredentials: true,
 });
 
